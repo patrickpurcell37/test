@@ -18,7 +18,7 @@
       "ticker": "AAPL",
       "lastProcessedDate": null,
       "lastEventTitle": null,
-      "enabled": true
+      "enabled": false
     },
     {
       "name": "Microsoft",

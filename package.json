@@ -1,16 +1,21 @@
 {
   "name": "earnings-summarizer",
-  "version": "1.0.0",
-  "description": "Automated earnings call transcript summarizer powered by Claude AI",
+  "version": "2.0.0",
+  "description": "Automated earnings call transcript summarizer — fetches, summarizes with Claude AI, emails to you",
   "type": "module",
   "main": "earnings-summarizer.js",
   "scripts": {
     "summarize": "node earnings-summarizer.js",
-    "fetch": "node fetch-transcript.js"
+    "check": "node scheduler.js",
+    "watch": "node scheduler.js --daemon"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.36.3",
-    "dotenv": "^16.4.5"
+    "dotenv": "^16.4.5",
+    "nodemailer": "^6.10.1"
+  },
+  "optionalDependencies": {
+    "node-cron": "^3.0.3"
   },
   "engines": {
     "node": ">=18.0.0"

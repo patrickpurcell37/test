@@ -1,0 +1,85 @@
+name: 📊 Earnings Alert
+
+on:
+  # ──────────────────────────────────────────────────────────────────
+  # Runs every weekday at 9:00 AM ET (14:00 UTC).
+  # Earnings transcripts are typically published within 24h of the call.
+  # Change this cron expression to suit your schedule:
+  #   "0 14 * * 1-5"  → Mon–Fri 9 AM ET
+  #   "0 14 * * *"    → Every day 9 AM ET
+  #   "0 20 * * 1-5"  → Mon–Fri 3 PM ET (catches same-day afternoon calls)
+  # ──────────────────────────────────────────────────────────────────
+  schedule:
+    - cron: "0 14 * * 1-5"
+
+  # Also allow manual triggering from the GitHub Actions UI
+  workflow_dispatch:
+    inputs:
+      force_company:
+        description: "Override: check only this ticker (e.g. NVDA). Leave empty for full watchlist."
+        required: false
+        type: string
+
+jobs:
+  check-earnings:
+    name: Check & Send Earnings Summaries
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Needed to commit updated watchlist.json state
+
+    steps:
+      # ── 1. Checkout ──────────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # ── 2. Node.js ───────────────────────────────────────────────────
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      # ── 3. Install dependencies ──────────────────────────────────────
+      - name: Install dependencies
+        run: npm ci
+
+      # ── 4. Override watchlist for manual single-company run ──────────
+      - name: Apply force_company override
+        if: ${{ github.event.inputs.force_company != '' }}
+        run: |
+          node -e "
+            const fs = require('fs');
+            const wl = JSON.parse(fs.readFileSync('watchlist.json', 'utf8'));
+            const ticker = '${{ github.event.inputs.force_company }}'.toUpperCase();
+            wl.companies = wl.companies.map(c => ({
+              ...c,
+              enabled: c.ticker === ticker,
+              // Clear lastProcessedDate to force re-processing
+              lastProcessedDate: c.ticker === ticker ? null : c.lastProcessedDate
+            }));
+            fs.writeFileSync('watchlist.json', JSON.stringify(wl, null, 2));
+            console.log('Watchlist filtered to:', ticker);
+          "
+
+      # ── 5. Run the scheduler ─────────────────────────────────────────
+      - name: Run earnings checker
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          TO_EMAIL: ${{ secrets.TO_EMAIL }}
+        run: node scheduler.js
+
+      # ── 6. Commit updated watchlist state ────────────────────────────
+      # watchlist.json stores lastProcessedDate per company so the next
+      # run knows not to re-send the same transcript.
+      - name: Save watchlist state
+        run: |
+          git config user.name "Earnings Bot"
+          git config user.email "earnings-bot@users.noreply.github.com"
+          git add watchlist.json summaries/ || true
+          git diff --staged --quiet && echo "No state changes" || \
+            git commit -m "chore: update earnings watchlist state [skip ci]" && \
+            git push

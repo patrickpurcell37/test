@@ -384,10 +384,7 @@ async function summarizeTranscript(client, transcript, skill, companyName, quiet
   const response = await client.messages.create({
     model: CONFIG.model,
     max_tokens: CONFIG.maxTokens,
-    thinking: {
-      type: "adaptive",
-      budget_tokens: CONFIG.thinkingBudget,
-    },
+    thinking: { type: "adaptive" },
     system: `You are an elite financial analyst specializing in earnings call analysis.
 You produce exceptionally insightful summaries that help investors make informed decisions.
 Follow the formatting instructions in the user's skill template precisely.`,

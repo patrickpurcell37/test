@@ -1,0 +1,126 @@
+NVIDIA Corporation Q4 FY2025 Earnings Call
+Date: February 26, 2025
+Participants: Jensen Huang (CEO), Colette Kress (CFO), Stewart Stogel (Investor Relations)
+
+**Stewart Stogel, Investor Relations**
+[00:00] Good afternoon, everyone. Thank you for joining NVIDIA's Fourth Quarter Fiscal Year 2025 Earnings Call. With me today are Jensen Huang, our President and Chief Executive Officer, and Colette Kress, our Executive Vice President and Chief Financial Officer.
+
+I'd like to remind you that our remarks today will include forward-looking statements within the meaning of federal securities law. Actual results may differ materially from those expressed or implied by these statements due to various factors including those discussed in our earnings release and most recent SEC filings. Our non-GAAP financial measures exclude stock-based compensation expense, acquisition-related costs and other items. A reconciliation can be found on our investor relations website.
+
+I will now turn the call over to Colette.
+
+**Colette Kress, CFO**
+[02:15] Thanks, Stewart, and good afternoon, everyone.
+
+Q4 was another remarkable quarter for NVIDIA. Revenue came in at $39.3 billion, up 12% sequentially and up 78% year over year, beating our guidance of $37.5 billion. We saw strength across all major product lines and geographies.
+
+Data Center revenue was $35.6 billion for Q4, up 16% sequentially and up 93% year over year. This reflects the extraordinary demand for our Hopper and Blackwell architectures. Blackwell revenue exceeded $11 billion in the quarter — our fastest product ramp in NVIDIA's history.
+
+Gaming revenue was $2.5 billion, up 11% sequentially and up 9% year over year, driven by the continued strength of our GeForce RTX 50 series launch and the largest installed base of GPUs ever.
+
+Professional Visualization revenue was $511 million, up 10% sequentially and up 18% year over year.
+
+Automotive revenue reached $570 million, up 27% sequentially and up 103% year over year, as DRIVE platform adoption accelerates across OEMs and robotaxi operators.
+
+OEM and other revenue was $116 million.
+
+Full-year revenue was $130.5 billion, up 114% year over year. This is the fastest we've ever scaled in our history.
+
+GAAP gross margin was 73.0% and non-GAAP gross margin was 73.5%. We are continuing to optimize Blackwell system yields, and we expect gross margin to expand as Blackwell matures through calendar 2025.
+
+GAAP operating income was $23.5 billion. Non-GAAP operating income was $26.2 billion, representing a 66.7% non-GAAP operating margin.
+
+GAAP EPS was $0.81. Non-GAAP EPS was $0.89, beating consensus by $0.04.
+
+We returned $8.0 billion to shareholders in Q4 through share repurchases and dividends.
+
+For Q1 FY2026, we expect:
+Revenue of approximately $43.0 billion, plus or minus 2%.
+GAAP and non-GAAP gross margins of approximately 70.6% and 71.0%, respectively.
+GAAP and non-GAAP operating expenses of approximately $5.0 billion and $3.6 billion, respectively.
+
+Now I'll turn the call to Jensen for business highlights.
+
+**Jensen Huang, CEO**
+[08:40] Thank you, Colette. Good afternoon, everyone.
+
+The age of AI is in full force. Enterprises, sovereign nations, hyperscalers, and startups around the world are racing to build AI infrastructure, and demand for NVIDIA's platforms is extraordinary.
+
+Let me walk you through what's happening. Blackwell is in full production. We shipped Blackwell-based systems to all major cloud providers — AWS, Microsoft Azure, Google Cloud, Oracle Cloud. We also shipped to a new and growing class of GPU cloud providers: CoreWeave, Lambda Labs, Crusoe, and others. These GPU cloud providers have emerged as an important new segment. They exist because demand from enterprises and AI labs for on-demand GPU capacity exceeds what the hyperscalers can provision today.
+
+Blackwell is the world's most powerful chip for AI inference. A single GB200 NVL72 rack — 72 GPUs connected with NVLink — delivers 30x the inference performance of our previous Hopper architecture for large language models. For reasoning models that require chain-of-thought computation — models like OpenAI's o1, o3, DeepSeek R1, and others — Blackwell's efficiency advantage is even more dramatic. Inference is the new workload. It's compute-intensive, latency-sensitive, and scales with demand.
+
+The Blackwell ramp was our fastest product generation launch ever. We exceeded $11 billion in Blackwell revenue this quarter alone, compared to zero revenue two quarters ago.
+
+Let me talk about inference demand specifically. The world is moving from training to inference at enormous scale. Every major AI lab and every major enterprise is now deploying AI agents — software programs that reason, plan, and take actions autonomously. These agents are inference-heavy. They call models hundreds or thousands of times to complete a task. The demand for inference compute is going to grow dramatically from here.
+
+DeepSeek was an interesting moment in January. It demonstrated that open-source Chinese AI labs had made remarkable progress with efficient training. Markets initially reacted with concern. But the correct interpretation is the opposite: DeepSeek showed that AI inference demand is scaling faster than anyone realized. More efficient training means more models, more applications, and more inference. We saw no softening in orders.
+
+Sovereign AI is accelerating. Countries around the world — India, Japan, Saudi Arabia, the UAE, France, Italy — are all making large-scale investments in national AI infrastructure. They want to own their AI data, train on their own languages and cultures, and capture the economic value of AI domestically. NVIDIA is the platform of choice for these sovereign AI initiatives.
+
+Our networking business — InfiniBand and Ethernet for AI — continues to grow rapidly. The largest AI clusters require hundreds of thousands of GPUs connected at massive bandwidth. Spectrum-X, our Ethernet for AI networking platform, is seeing strong adoption. We shipped over a million networking ports this quarter.
+
+NVIDIA Inference Microservices, or NIMs — our pre-packaged AI model containers — now number over 500 models. NIMs make it easy for enterprises to deploy AI. We're seeing rapid enterprise adoption across healthcare, financial services, manufacturing, and retail.
+
+On the automotive front, our DRIVE Orin and DRIVE Thor platforms are winning. BYD — the world's largest EV maker — adopted DRIVE Thor for their next generation of intelligent vehicles. We're also powering robotaxi fleets: Waymo, WeRide, and others are scaling on NVIDIA platforms.
+
+Robotics is an emerging opportunity. We launched Isaac GR00T — our foundation model for humanoid robots — and it's being adopted by leading robotics companies. The physical AI era is beginning.
+
+I want to address a question we're getting often: what about the data center infrastructure cycle? Is this a bubble? Is demand durable?
+
+Let me be direct. We are at the beginning. The global installed base of data center infrastructure needs to be rebuilt from CPU-centric to GPU-accelerated. There are roughly $1 trillion worth of installed data center infrastructure globally. Nearly all of it was built for general-purpose computing. AI computing requires GPU acceleration. The transition will take years and is not optional — companies that don't deploy AI will be outcompeted.
+
+The companies driving demand — the hyperscalers — have been explicit: Microsoft, Amazon, Google, Meta have collectively guided to over $300 billion in capex in 2025. A large portion of that is going to AI. This isn't speculative; it's contracted and in process.
+
+I am incredibly proud of the NVIDIA team. What we've built — the full-stack NVIDIA AI platform from silicon to software to services — is unique. No one else has this. Competitors are years behind, and the moat gets wider every quarter.
+
+**Q&A SESSION**
+
+**Analyst (Joseph Moore, Morgan Stanley)**
+[35:12] Jensen, can you talk about the Blackwell NVL72 rack yield ramp? You mentioned some supply constraints earlier in the quarter. Where do you stand on GB200 supply, and can you size the opportunity in fiscal 2026?
+
+**Jensen Huang**
+[35:30] Yes, the GB200 NVL72 rack is a system of extraordinary complexity. It has 72 GPUs, 36 Grace CPUs, liquid cooling, high-bandwidth memory. Assembling these systems to our quality standards takes time. We made substantial progress during Q4. Supply of GB200 NVL72 is still constrained — demand significantly exceeds supply. But we're ramping every quarter. I expect supply and demand to come closer to balance in the second half of fiscal 2026.
+
+On sizing the opportunity for FY2026: I won't give full-year guidance today, but Colette guided Q1 to $43 billion. The trajectory should continue upward. Our customers are telling us they need more, not less.
+
+**Analyst (Vivek Arya, Bank of America)**
+[40:05] Jensen, how should we think about the gross margin trajectory? You guided Q1 to 71% non-GAAP, down from 73.5% in Q4. Is that just Blackwell mix? When do you return to 73%+ margins?
+
+**Colette Kress**
+[40:22] Thanks, Vivek. The gross margin dip in Q1 is primarily due to the initial costs of ramping Blackwell NVL72 systems at scale. These complex systems require more engineering and supply chain management during the early production phase. As we optimize the manufacturing process and scale volumes, we expect margins to improve. We should be back to the mid-70s range as we move through fiscal 2026.
+
+**Analyst (Stacy Rasgon, Bernstein)**
+[45:30] Jensen, you mentioned DeepSeek. Can you speak more specifically about what you've seen in terms of order patterns and demand signals since the DeepSeek news? Have you seen any changes in customer conversations?
+
+**Jensen Huang**
+[45:48] No change in demand signals whatsoever. If anything, interest increased. Let me explain why.
+
+DeepSeek demonstrated a more efficient training methodology using fewer GPUs with chain-of-thought reasoning and reinforcement learning from human feedback. That's impressive. But what it also demonstrated is that this approach — long chain-of-thought reasoning — is inference-intensive. You're doing many more tokens of computation per user query. This is sometimes called "test-time compute scaling." The better the model reasons, the more compute it uses at inference. And so the net effect of models like DeepSeek R1 is that inference demand goes up, not down.
+
+Additionally, if training becomes cheaper, more models get trained. More models means more applications, more use cases, more inference. You see this logic: cheaper and more accessible AI means more AI — not less. Jevons paradox applies perfectly here.
+
+**Analyst (Timothy Arcuri, UBS)**
+[52:10] Jensen, can you talk about the hyperscaler concentration risk? Your top three customers are a significant portion of revenue. Is there any risk they start deploying their own custom chips and reducing NVIDIA spending?
+
+**Jensen Huang**
+[52:25] Our hyperscaler customers are among the most sophisticated technology organizations on the planet. They absolutely design their own custom chips — Google's TPUs, Amazon's Trainium, Microsoft's Maia. I think this is great. It reflects the extraordinary importance of AI. And yet, all of them continue to significantly grow their NVIDIA GPU deployments.
+
+Why? Because the use cases for GPUs are different from TPUs and ASICs. Custom chips are optimized for specific workloads — they're great at training a specific model architecture at extreme scale. GPUs are general-purpose and flexible. A GPU can run any model, train any architecture, do inference of any kind. When a new model comes out — a new reasoning model, a new multimodal model — you can deploy it on NVIDIA GPUs immediately. Custom chips require months of redesign.
+
+In a world where AI is advancing rapidly, flexibility has enormous value. So I expect our hyperscaler customers to have a heterogeneous mix of NVIDIA GPUs and their own custom silicon — but NVIDIA's share of their AI spend will remain significant.
+
+**Analyst (Matt Ramsay, TD Cowen)**
+[58:40] Jensen, you mentioned Automotive was up 103% year over year. Can you talk about what's driving that and what your automotive revenue looks like over the next two years?
+
+**Jensen Huang**
+[58:55] Automotive is becoming a meaningful revenue contributor, and I expect this to accelerate significantly.
+
+There are two main drivers. First, our DRIVE Orin and Thor autonomous driving platforms. Nearly every major automaker is now developing on NVIDIA DRIVE. BYD — the world's largest EV maker by volume — just announced adoption of DRIVE Thor for their intelligent vehicle lineup. That's a massive win. Toyota, Volvo, Hyundai, and many others are on DRIVE. When these vehicles go into production, each one generates NRE-like revenue for us.
+
+Second, the robotaxi and autonomous trucking market is scaling. Waymo just announced they're expanding service to more cities. Aurora is going commercial with autonomous trucks. We're powering those fleets. As robotaxi fleets scale from hundreds to hundreds of thousands of vehicles, the revenue multiplies.
+
+Automotive for NVIDIA could be a $10 billion business within a few years. It's becoming a meaningful and durable revenue stream.
+
+**Stewart Stogel**
+[65:00] Thank you, Jensen and Colette. Thank you all for joining us today. A replay of today's call will be available on our investor relations website. We look forward to speaking with you again next quarter.

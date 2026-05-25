@@ -84,13 +84,12 @@ jobs:
 
       # ── 6. Run the scheduler ─────────────────────────────────────────
       - name: Run earnings checker
+        run: node scheduler.js
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           GMAIL_USER: ${{ secrets.GMAIL_USER }}
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
           TO_EMAIL: ${{ secrets.TO_EMAIL }}
-        run: node scheduler.js
-        env:
           PUPPETEER_CACHE_DIR: ~/.cache/puppeteer
 
       # ── 7. Commit updated watchlist state ────────────────────────────

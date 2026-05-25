@@ -19,6 +19,11 @@ on:
         description: "Override: check only this ticker (e.g. NVDA). Leave empty for full watchlist."
         required: false
         type: string
+      test_email:
+        description: "Set to 'true' to send a test email only (skips transcript search — use to verify Gmail secrets)."
+        required: false
+        default: "false"
+        type: string
 
 jobs:
   check-earnings:
@@ -82,8 +87,18 @@ jobs:
             console.log('Watchlist filtered to:', ticker);
           "
 
-      # ── 6. Run the scheduler ─────────────────────────────────────────
+      # ── 6a. Test email only (verify Gmail secrets without fetching transcripts)
+      - name: Send test email
+        if: ${{ github.event.inputs.test_email == 'true' }}
+        run: node test-email.js
+        env:
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          TO_EMAIL: ${{ secrets.TO_EMAIL }}
+
+      # ── 6b. Run the full scheduler ───────────────────────────────────
       - name: Run earnings checker
+        if: ${{ github.event.inputs.test_email != 'true' }}
         run: node scheduler.js
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}

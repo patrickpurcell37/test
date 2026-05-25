@@ -41,11 +41,30 @@ jobs:
           node-version: "20"
           cache: "npm"
 
-      # ── 3. Install dependencies ──────────────────────────────────────
+      # ── 3. Install Chrome system dependencies (for Puppeteer PDF) ──────
+      - name: Install Chrome dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq \
+            libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 \
+            libdrm2 libxkbcommon0 libxcomposite1 libxdamage1 \
+            libxrandr2 libgbm1 libpango-1.0-0 libcairo2 libasound2t64
+
+      # ── 4. Install Node dependencies (with Puppeteer Chrome) ─────────
       - name: Install dependencies
         run: npm ci
+        env:
+          PUPPETEER_CACHE_DIR: ~/.cache/puppeteer
 
-      # ── 4. Override watchlist for manual single-company run ──────────
+      # ── 4b. Cache Puppeteer's Chrome download ─────────────────────────
+      - name: Cache Puppeteer Chrome
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/puppeteer
+          key: puppeteer-chrome-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: puppeteer-chrome-${{ runner.os }}-
+
+      # ── 5. Override watchlist for manual single-company run ──────────
       - name: Apply force_company override
         if: ${{ github.event.inputs.force_company != '' }}
         run: |
@@ -63,7 +82,7 @@ jobs:
             console.log('Watchlist filtered to:', ticker);
           "
 
-      # ── 5. Run the scheduler ─────────────────────────────────────────
+      # ── 6. Run the scheduler ─────────────────────────────────────────
       - name: Run earnings checker
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -71,8 +90,10 @@ jobs:
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
           TO_EMAIL: ${{ secrets.TO_EMAIL }}
         run: node scheduler.js
+        env:
+          PUPPETEER_CACHE_DIR: ~/.cache/puppeteer
 
-      # ── 6. Commit updated watchlist state ────────────────────────────
+      # ── 7. Commit updated watchlist state ────────────────────────────
       # watchlist.json stores lastProcessedDate per company so the next
       # run knows not to re-send the same transcript.
       - name: Save watchlist state

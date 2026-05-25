@@ -385,7 +385,7 @@ async function summarizeTranscript(client, transcript, skill, companyName, quiet
     model: CONFIG.model,
     max_tokens: CONFIG.maxTokens,
     thinking: {
-      type: "enabled",
+      type: "adaptive",
       budget_tokens: CONFIG.thinkingBudget,
     },
     system: `You are an elite financial analyst specializing in earnings call analysis.

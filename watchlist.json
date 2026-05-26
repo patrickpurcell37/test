@@ -1,10 +1,16 @@
 {
+  "_instructions": {
+    "how_to_add": "Copy any entry below and change the name and ticker. Set enabled: true. That's it.",
+    "how_to_pause": "Set enabled: false on any company to pause it without losing its state.",
+    "lastProcessedDate": "Managed automatically — do not edit manually. It prevents duplicate summaries.",
+    "finding_tickers": "Google the company name + 'stock ticker' if unsure. E.g. 'Meta stock ticker' → META"
+  },
   "companies": [
     {
       "name": "NVIDIA",
       "ticker": "NVDA",
-      "lastProcessedDate": null,
-      "lastEventTitle": null,
+      "lastProcessedDate": "2026-05-20",
+      "lastEventTitle": "Nvidia (NVDA) Q1 2027 Earnings Transcript",
       "enabled": true
     },
     {
@@ -12,8 +18,44 @@
       "ticker": "AAPL",
       "lastProcessedDate": null,
       "lastEventTitle": null,
-      "enabled": true
+      "enabled": false
+    },
+    {
+      "name": "Microsoft",
+      "ticker": "MSFT",
+      "lastProcessedDate": null,
+      "lastEventTitle": null,
+      "enabled": false
+    },
+    {
+      "name": "Meta Platforms",
+      "ticker": "META",
+      "lastProcessedDate": null,
+      "lastEventTitle": null,
+      "enabled": false
+    },
+    {
+      "name": "Tesla",
+      "ticker": "TSLA",
+      "lastProcessedDate": null,
+      "lastEventTitle": null,
+      "enabled": false
+    },
+    {
+      "name": "Alphabet",
+      "ticker": "GOOGL",
+      "lastProcessedDate": null,
+      "lastEventTitle": null,
+      "enabled": false
+    },
+    {
+      "name": "Amazon",
+      "ticker": "AMZN",
+      "lastProcessedDate": null,
+      "lastEventTitle": null,
+      "enabled": false
     }
   ],
   "_comment": "Add any company here. Set enabled: false to pause without deleting. lastProcessedDate is updated automatically after each summary is sent."
 }
+

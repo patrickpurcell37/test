@@ -55,5 +55,7 @@
       "lastEventTitle": null,
       "enabled": false
     }
-  ]
+  ],
+  "_comment": "Add any company here. Set enabled: false to pause without deleting. lastProcessedDate is updated automatically after each summary is sent."
 }
+

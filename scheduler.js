@@ -26,7 +26,12 @@ import { checkCompany } from "./lib/checker.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const WATCHLIST_PATH = path.join(__dirname, "watchlist.json");
+// Support --watchlist <path> override (used by web server for single-ticker runs)
+const watchlistArgIdx = process.argv.indexOf("--watchlist");
+const WATCHLIST_PATH  = watchlistArgIdx !== -1
+  ? path.resolve(process.argv[watchlistArgIdx + 1])
+  : path.join(__dirname, "watchlist.json");
+
 const SKILL_PATH = path.join(__dirname, "skill.md");
 
 // ─── Logging ────────────────────────────────────────────────────────────────

@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EarningsIQ — Earnings Intelligence Dashboard</title>
+  <link rel="stylesheet" href="/css/styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <div id="app">
+
+    <!-- ── SIDEBAR ─────────────────────────────────────────────────────────── -->
+    <aside id="sidebar">
+      <div id="sidebar-logo">
+        <div class="logo-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+          </svg>
+        </div>
+        <span class="logo-text">EarningsIQ</span>
+      </div>
+
+      <nav id="sidebar-nav">
+        <a class="nav-link active" data-view="watchlist" href="#">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+            <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+          </svg>
+          <span>Watchlist</span>
+        </a>
+        <a class="nav-link" data-view="calendar" href="#">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+          <span>Calendar</span>
+        </a>
+        <a class="nav-link" data-view="transcripts" href="#">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+            <polyline points="10 9 9 9 8 9"/>
+          </svg>
+          <span>Summaries</span>
+        </a>
+        <a class="nav-link" data-view="search" href="#">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          </svg>
+          <span>Search</span>
+        </a>
+      </nav>
+
+      <div id="sidebar-bottom">
+        <div class="sidebar-divider"></div>
+        <div id="api-status">
+          <div class="status-dot" id="api-dot"></div>
+          <span id="api-label">Checking API...</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ── MAIN CONTENT ───────────────────────────────────────────────────── -->
+    <main id="main">
+
+      <!-- ── VIEW: WATCHLIST ──────────────────────────────────────────────── -->
+      <section class="view active" id="view-watchlist">
+        <div class="view-header">
+          <div>
+            <h1 class="view-title">Watchlist</h1>
+            <p class="view-subtitle">Monitor earnings for your companies</p>
+          </div>
+          <button class="btn btn-primary" id="btn-add-company">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M12 5v14M5 12h14"/>
+            </svg>
+            Add Company
+          </button>
+        </div>
+
+        <div id="watchlist-grid">
+          <!-- Rendered by JS -->
+          <div class="loading-spinner">
+            <div class="spinner"></div>
+            <span>Loading watchlist…</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── VIEW: CALENDAR ───────────────────────────────────────────────── -->
+      <section class="view" id="view-calendar">
+        <div class="view-header">
+          <div>
+            <h1 class="view-title">Earnings Calendar</h1>
+            <p class="view-subtitle">Upcoming earnings for your watchlist</p>
+          </div>
+          <button class="btn btn-ghost" id="btn-refresh-calendar">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="23 4 23 10 17 10"/>
+              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+            </svg>
+            Refresh
+          </button>
+        </div>
+
+        <div id="calendar-content">
+          <div class="loading-spinner">
+            <div class="spinner"></div>
+            <span>Loading calendar…</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── VIEW: SUMMARIES / TRANSCRIPT ──────────────────────────────────── -->
+      <section class="view" id="view-transcripts">
+        <div class="view-header">
+          <div>
+            <h1 class="view-title">Summaries</h1>
+            <p class="view-subtitle">AI-generated earnings call analyses</p>
+          </div>
+        </div>
+
+        <div id="summaries-layout">
+          <div id="summaries-list">
+            <div class="loading-spinner">
+              <div class="spinner"></div>
+              <span>Loading summaries…</span>
+            </div>
+          </div>
+          <div id="summary-viewer">
+            <div id="summary-viewer-empty">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+              </svg>
+              <p>Select a summary to view the AI analysis</p>
+            </div>
+            <div id="summary-viewer-content" class="hidden">
+              <div id="summary-toolbar">
+                <div id="summary-meta">
+                  <span id="summary-ticker-badge" class="ticker-badge"></span>
+                  <span id="summary-title-text"></span>
+                </div>
+                <div id="summary-actions">
+                  <a id="btn-download-pdf" class="btn btn-ghost btn-sm" href="#" target="_blank">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                      <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                    </svg>
+                    PDF
+                  </a>
+                </div>
+              </div>
+              <div id="summary-body"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── VIEW: SEARCH ─────────────────────────────────────────────────── -->
+      <section class="view" id="view-search">
+        <div class="view-header">
+          <div>
+            <h1 class="view-title">Company Search</h1>
+            <p class="view-subtitle">Find any stock and add it to your watchlist</p>
+          </div>
+        </div>
+
+        <div id="search-container">
+          <div id="search-input-wrap">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+            </svg>
+            <input type="text" id="search-input" placeholder="Search by ticker or company name…" autocomplete="off" />
+            <div id="search-spinner" class="hidden">
+              <div class="spinner small"></div>
+            </div>
+          </div>
+
+          <div id="search-results">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+      </section>
+
+    </main><!-- /main -->
+  </div><!-- /app -->
+
+  <!-- ── ADD COMPANY MODAL ────────────────────────────────────────────────── -->
+  <div id="overlay" class="hidden"></div>
+
+  <div id="modal-add" class="modal hidden">
+    <div class="modal-header">
+      <h2>Add Company</h2>
+      <button class="modal-close" id="btn-close-add">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 6 6 18M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <label class="form-label">Ticker Symbol</label>
+      <input type="text" id="modal-ticker" class="form-input" placeholder="e.g. NVDA" maxlength="10" style="text-transform:uppercase" />
+      <label class="form-label" style="margin-top:14px">Company Name</label>
+      <input type="text" id="modal-name" class="form-input" placeholder="e.g. NVIDIA Corporation" />
+      <div id="modal-add-error" class="form-error hidden"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="btn-cancel-add">Cancel</button>
+      <button class="btn btn-primary" id="btn-confirm-add">Add to Watchlist</button>
+    </div>
+  </div>
+
+  <!-- ── RUN LOG MODAL ────────────────────────────────────────────────────── -->
+  <div id="modal-run" class="modal hidden">
+    <div class="modal-header">
+      <h2 id="run-modal-title">Running Earnings Check…</h2>
+      <button class="modal-close" id="btn-close-run" disabled>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 6 6 18M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div id="run-log"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary hidden" id="btn-run-done">Done</button>
+    </div>
+  </div>
+
+  <script src="/js/app.js" type="module"></script>
+</body>
+</html>

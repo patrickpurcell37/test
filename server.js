@@ -408,11 +408,6 @@ app.get("/api/quote/:ticker", async (req, res) => {
   }
 });
 
-// ── Fallback → serve SPA ─────────────────────────────────────────────────────
-app.use((req, res) => {
-  res.sendFile(path.join(PUBLIC_DIR, "index.html"));
-});
-
 // ── POST /api/test-email — send a test email to verify credentials ────────────
 app.post("/api/test-email", async (req, res) => {
   const missing = [];
@@ -440,6 +435,11 @@ app.post("/api/test-email", async (req, res) => {
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message });
   }
+});
+
+// ── Fallback → serve SPA ─────────────────────────────────────────────────────
+app.use((req, res) => {
+  res.sendFile(path.join(PUBLIC_DIR, "index.html"));
 });
 
 // ── Start ─────────────────────────────────────────────────────────────────────

@@ -1,51 +1,35 @@
 /**
  * EarningsIQ — Frontend SPA
- *
- * A Quartr-inspired earnings intelligence dashboard.
- * Views: Watchlist | Calendar | Summaries | Search
+ * Uses event delegation throughout — no onclick="" attributes.
  */
 
-// ── Markdown renderer (basic) ──────────────────────────────────────────────────
+// ── Markdown renderer ──────────────────────────────────────────────────────────
 function renderMarkdown(md) {
   if (!md) return '';
   let html = md
-    // Escape HTML entities first
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    // Headers
     .replace(/^# (.+)$/gm, '<h1>$1</h1>')
     .replace(/^## (.+)$/gm, '<h2>$1</h2>')
-    .replace(/^### (.+)$/gm, '<h3>$3</h3>'.replace('$3','$1'))
-    // Bold & italic
+    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    // Inline code
     .replace(/`([^`]+)`/g, '<code>$1</code>')
-    // HR
     .replace(/^---+$/gm, '<hr>')
-    // Tables (basic — header + rows)
     .replace(/(\|.+\|\n)(\|[-| :]+\|\n)((\|.+\|\n?)*)/g, (match) => {
       const rows = match.trim().split('\n').filter(Boolean);
-      const headerCols = rows[0].split('|').filter(s => s.trim());
+      const headerCols = rows[0].split('|').filter((s, i, a) => i > 0 && i < a.length - 1);
       const header = '<tr>' + headerCols.map(c => `<th>${c.trim()}</th>`).join('') + '</tr>';
       const bodyRows = rows.slice(2).map(row => {
-        const cols = row.split('|').filter(s => s.trim() !== undefined).slice(1, -1);
+        const cols = row.split('|').filter((s, i, a) => i > 0 && i < a.length - 1);
         return '<tr>' + cols.map(c => `<td>${c.trim()}</td>`).join('') + '</tr>';
       }).join('');
       return `<table><thead>${header}</thead><tbody>${bodyRows}</tbody></table>`;
     })
-    // Blockquote
     .replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>')
-    // Unordered lists
     .replace(/^[\*\-] (.+)$/gm, '<li>$1</li>')
-    .replace(/(<li>.*<\/li>\n?)+/g, (m) => `<ul>${m}</ul>`)
-    // Ordered lists
-    .replace(/^\d+\. (.+)$/gm, '<li>$1</li>')
-    // Line breaks → paragraphs
+    .replace(/(<li>.*<\/li>\n?)+/g, m => `<ul>${m}</ul>`)
     .replace(/\n\n/g, '</p><p>')
-    .replace(/\n/g, '<br>')
-    ;
-
-  // Wrap in paragraph tags if not already block elements
+    .replace(/\n/g, '<br>');
   return `<div class="md-content">${html}</div>`;
 }
 
@@ -103,6 +87,7 @@ const state = {
   selectedSummary: null,
   currentView: 'watchlist',
   searchTimeout: null,
+  _pendingTickerFilter: null,
 };
 
 // ── Toast ──────────────────────────────────────────────────────────────────────
@@ -119,14 +104,15 @@ function showView(name) {
   state.currentView = name;
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-  document.getElementById(`view-${name}`)?.classList.add('active');
-  document.querySelector(`.nav-link[data-view="${name}"]`)?.classList.add('active');
+  const viewEl = document.getElementById(`view-${name}`);
+  if (viewEl) viewEl.classList.add('active');
+  const navEl = document.querySelector(`.nav-link[data-view="${name}"]`);
+  if (navEl) navEl.classList.add('active');
 
-  // Lazy-load data for each view
-  if (name === 'watchlist') loadWatchlist();
-  if (name === 'calendar')  loadCalendar();
+  if (name === 'watchlist')   loadWatchlist();
+  if (name === 'calendar')    loadCalendar();
   if (name === 'transcripts') loadSummaries();
-  if (name === 'search') focusSearch();
+  if (name === 'search')      focusSearch();
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -136,11 +122,9 @@ function showView(name) {
 async function loadWatchlist() {
   const grid = document.getElementById('watchlist-grid');
   grid.innerHTML = `<div class="loading-spinner"><div class="spinner"></div><span>Loading watchlist…</span></div>`;
-
   try {
     state.watchlist = await api.get('/api/watchlist');
     renderWatchlistGrid();
-    // Fetch live prices in background
     state.watchlist.forEach(c => fetchQuote(c.ticker));
   } catch (e) {
     grid.innerHTML = `<div class="empty-state"><p>Failed to load watchlist: ${e.message}</p></div>`;
@@ -152,7 +136,6 @@ async function fetchQuote(ticker) {
     const q = await api.get(`/api/quote/${ticker}`);
     if (q && q.price) {
       state.quotes[ticker] = q;
-      // Update price cells in existing cards
       const card = document.querySelector(`.company-card[data-ticker="${ticker}"]`);
       if (card) updateCardPrice(card, ticker);
     }
@@ -162,11 +145,9 @@ async function fetchQuote(ticker) {
 function updateCardPrice(card, ticker) {
   const q = state.quotes[ticker];
   if (!q) return;
-
   const sign = q.changePct >= 0 ? '+' : '';
   const priceEl = card.querySelector('.card-price');
   const changeEl = card.querySelector('.card-change');
-
   if (priceEl) priceEl.textContent = `$${q.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   if (changeEl) {
     changeEl.textContent = `${sign}${q.changePct.toFixed(2)}%`;
@@ -176,7 +157,6 @@ function updateCardPrice(card, ticker) {
 
 function renderWatchlistGrid() {
   const grid = document.getElementById('watchlist-grid');
-
   if (state.watchlist.length === 0) {
     grid.innerHTML = `
       <div class="empty-state">
@@ -185,23 +165,21 @@ function renderWatchlistGrid() {
           <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
         </svg>
         <p>Your watchlist is empty.<br>Add companies to start tracking earnings.</p>
-        <button class="btn btn-primary" onclick="openAddModal()">Add Your First Company</button>
+        <button class="btn btn-primary" data-action="open-add">Add Your First Company</button>
       </div>`;
     return;
   }
-
-  grid.innerHTML = state.watchlist.map(company => renderCompanyCard(company)).join('');
+  grid.innerHTML = state.watchlist.map(renderCompanyCard).join('');
 }
 
 function renderCompanyCard(company) {
   const q = state.quotes[company.ticker];
-  const priceText = q
-    ? `$${q.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-    : '—';
+  const priceText = q ? `$${q.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—';
   const changePct = q ? q.changePct : null;
   const changeText = q ? `${changePct >= 0 ? '+' : ''}${changePct.toFixed(2)}%` : '';
+  const hasSummary = !!company.lastProcessedDate;
+  const av = company.ticker.slice(0, 4);
 
-  const hasSummary = company.lastProcessedDate;
   const statusHtml = company.enabled
     ? `<div class="status-pill active"><div class="status-pill-dot"></div>Active</div>`
     : `<div class="status-pill paused">Paused</div>`;
@@ -217,9 +195,6 @@ function renderCompanyCard(company) {
         <div class="event-title" style="color:var(--text-muted)">No summaries yet</div>
        </div>`;
 
-  // Short ticker for avatar (max 4 chars)
-  const av = company.ticker.slice(0, 4);
-
   return `
     <div class="company-card ${company.enabled ? '' : 'disabled'}" data-ticker="${company.ticker}">
       <div class="card-header">
@@ -231,44 +206,62 @@ function renderCompanyCard(company) {
           </div>
         </div>
         <label class="card-toggle" title="${company.enabled ? 'Pause' : 'Enable'} monitoring">
-          <input type="checkbox" class="toggle-input" data-ticker="${company.ticker}"
-                 ${company.enabled ? 'checked' : ''} onchange="toggleCompany('${company.ticker}', this.checked)">
+          <input type="checkbox" class="toggle-input"
+                 data-action="toggle" data-ticker="${company.ticker}"
+                 ${company.enabled ? 'checked' : ''}>
           <span class="toggle-slider"></span>
         </label>
       </div>
-
       <div class="card-price-row">
         <span class="card-price">${priceText}</span>
         ${changeText ? `<span class="card-change ${changePct >= 0 ? 'pos' : 'neg'}">${changeText}</span>` : ''}
         ${statusHtml}
       </div>
-
       ${lastEventHtml}
-
       <div class="card-actions">
-        <button class="btn btn-ghost" onclick="runEarnings('${company.ticker}')">
+        <button class="btn btn-ghost" data-action="run" data-ticker="${company.ticker}">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <polygon points="5 3 19 12 5 21 5 3"/>
           </svg>
           Run Now
         </button>
         ${hasSummary ? `
-          <button class="btn btn-ghost" onclick="viewSummaryForTicker('${company.ticker}')">
+          <button class="btn btn-ghost" data-action="view-summary" data-ticker="${company.ticker}">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
               <polyline points="14 2 14 8 20 8"/>
             </svg>
             View
-          </button>
-        ` : ''}
-        <button class="btn btn-danger" onclick="deleteCompany('${company.ticker}')">
+          </button>` : ''}
+        <button class="btn btn-danger" data-action="delete" data-ticker="${company.ticker}">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <path d="M18 6 6 18M6 6l12 12"/>
           </svg>
         </button>
       </div>
-    </div>
-  `;
+    </div>`;
+}
+
+// ── Delegated click handler for watchlist grid ─────────────────────────────────
+function handleWatchlistClick(e) {
+  // Button clicks
+  const btn = e.target.closest('[data-action]');
+  if (!btn) return;
+
+  const action = btn.dataset.action;
+  const ticker = btn.dataset.ticker;
+
+  if (action === 'run')          runEarnings(ticker);
+  if (action === 'delete')       deleteCompany(ticker);
+  if (action === 'view-summary') viewSummaryForTicker(ticker);
+  if (action === 'open-add')     openAddModal();
+}
+
+// ── Delegated change handler for toggles ──────────────────────────────────────
+function handleWatchlistChange(e) {
+  const input = e.target.closest('[data-action="toggle"]');
+  if (!input) return;
+  toggleCompany(input.dataset.ticker, input.checked);
 }
 
 async function toggleCompany(ticker, enabled) {
@@ -276,14 +269,12 @@ async function toggleCompany(ticker, enabled) {
     await api.patch(`/api/watchlist/${ticker}`, { enabled });
     const idx = state.watchlist.findIndex(c => c.ticker === ticker);
     if (idx !== -1) state.watchlist[idx].enabled = enabled;
-    // Update card visual without full re-render
     const card = document.querySelector(`.company-card[data-ticker="${ticker}"]`);
     if (card) card.classList.toggle('disabled', !enabled);
     toast(`${ticker} ${enabled ? 'enabled' : 'paused'}`, enabled ? 'success' : 'info');
   } catch (e) {
     toast(`Failed: ${e.message}`, 'error');
-    // Revert the checkbox
-    const cb = document.querySelector(`.toggle-input[data-ticker="${ticker}"]`);
+    const cb = document.querySelector(`[data-action="toggle"][data-ticker="${ticker}"]`);
     if (cb) cb.checked = !enabled;
   }
 }
@@ -301,9 +292,8 @@ async function deleteCompany(ticker) {
 }
 
 function viewSummaryForTicker(ticker) {
-  showView('transcripts');
-  // After loading, select the most recent summary for this ticker
   state._pendingTickerFilter = ticker;
+  showView('transcripts');
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -312,13 +302,9 @@ function viewSummaryForTicker(ticker) {
 
 function openAddModal(prefill = {}) {
   document.getElementById('modal-ticker').value = prefill.ticker || '';
-  document.getElementById('modal-name').value = prefill.name || '';
+  document.getElementById('modal-name').value   = prefill.name   || '';
   document.getElementById('modal-add-error').classList.add('hidden');
   showModal('modal-add');
-}
-
-function closeAddModal() {
-  closeModal();
 }
 
 async function confirmAdd() {
@@ -351,75 +337,85 @@ async function confirmAdd() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// RUN EARNINGS MODAL (SSE log stream)
+// RUN EARNINGS (SSE log stream)
 // ─────────────────────────────────────────────────────────────────────────────
 
 function runEarnings(ticker) {
-  const logEl  = document.getElementById('run-log');
-  const title  = document.getElementById('run-modal-title');
+  const logEl    = document.getElementById('run-log');
+  const titleEl  = document.getElementById('run-modal-title');
   const closeBtn = document.getElementById('btn-close-run');
   const doneBtn  = document.getElementById('btn-run-done');
 
-  logEl.innerHTML = '';
-  title.textContent = `Running: ${ticker}`;
-  closeBtn.disabled = true;
+  // Reset modal state
+  logEl.innerHTML    = '';
+  titleEl.textContent = `Running: ${ticker}`;
+  closeBtn.disabled  = true;
   doneBtn.classList.add('hidden');
 
   showModal('modal-run');
 
-  const appendLog = (line) => {
+  function appendLog(line) {
     const div = document.createElement('div');
     div.textContent = line;
-    // Colorize lines
-    if (line.includes('✅') || line.includes('✉️')) div.className = 'log-line-success';
-    else if (line.includes('❌') || line.includes('Error')) div.className = 'log-line-error';
+    if (line.includes('✅') || line.includes('✉️'))               div.className = 'log-line-success';
+    else if (line.includes('❌') || line.includes('Error'))        div.className = 'log-line-error';
     else if (line.includes('🚀') || line.includes('📅') || line.includes('🔎')) div.className = 'log-line-info';
     logEl.appendChild(div);
     logEl.scrollTop = logEl.scrollHeight;
-  };
+  }
 
-  fetch(`/api/run/${ticker}`, { method: 'POST' })
-    .then(resp => {
-      const reader = resp.body.getReader();
+  function finish(success) {
+    closeBtn.disabled = false;
+    doneBtn.classList.remove('hidden');
+    if (success) { loadWatchlist(); loadSummaries(); }
+  }
+
+  appendLog(`Connecting to server…`);
+
+  fetch(`/api/run/${encodeURIComponent(ticker)}`, { method: 'POST' })
+    .then(function(resp) {
+      if (!resp.ok) throw new Error(`Server returned ${resp.status}`);
+      if (!resp.body) throw new Error('Streaming not supported in this browser');
+
+      const reader  = resp.body.getReader();
       const decoder = new TextDecoder();
-      let buffer = '';
+      let buffer    = '';
 
-      const read = () => reader.read().then(({ done, value }) => {
-        if (done) {
-          finishRun(ticker, closeBtn, doneBtn);
-          return;
-        }
-        buffer += decoder.decode(value, { stream: true });
-        const parts = buffer.split('\n\n');
-        buffer = parts.pop(); // last incomplete chunk
-        for (const part of parts) {
-          if (!part.startsWith('data:')) continue;
-          try {
-            const ev = JSON.parse(part.slice(5).trim());
-            if (ev.log) appendLog(ev.log);
-            if (ev.done) {
-              finishRun(ticker, closeBtn, doneBtn, ev.success);
-              return;
+      function read() {
+        reader.read().then(function(chunk) {
+          if (chunk.done) { finish(false); return; }
+
+          buffer += decoder.decode(chunk.value, { stream: true });
+          var parts = buffer.split('\n\n');
+          buffer = parts.pop(); // keep incomplete tail
+
+          for (var i = 0; i < parts.length; i++) {
+            var part = parts[i].trim();
+            if (!part) continue;
+            // Strip "data: " prefix (SSE format)
+            var line = part.startsWith('data:') ? part.slice(5).trim() : part;
+            try {
+              var ev = JSON.parse(line);
+              if (ev.log) appendLog(ev.log);
+              if (ev.done) { finish(!!ev.success); return; }
+            } catch(_) {
+              // not JSON — show raw
+              if (line) appendLog(line);
             }
-          } catch (_) {}
-        }
-        read();
-      });
+          }
+          read(); // continue reading
+        }).catch(function(err) {
+          appendLog('❌ Stream error: ' + err.message);
+          finish(false);
+        });
+      }
+
       read();
     })
-    .catch(e => {
-      appendLog(`❌ Connection error: ${e.message}`);
-      finishRun(ticker, closeBtn, doneBtn, false);
+    .catch(function(err) {
+      appendLog('❌ Connection failed: ' + err.message);
+      finish(false);
     });
-}
-
-function finishRun(ticker, closeBtn, doneBtn, success) {
-  closeBtn.disabled = false;
-  doneBtn.classList.remove('hidden');
-  if (success !== false) {
-    loadWatchlist(); // refresh to show updated state
-    loadSummaries();
-  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -429,7 +425,6 @@ function finishRun(ticker, closeBtn, doneBtn, success) {
 async function loadCalendar() {
   const content = document.getElementById('calendar-content');
   content.innerHTML = `<div class="loading-spinner"><div class="spinner"></div><span>Fetching earnings dates…</span></div>`;
-
   try {
     const [calendarData, watchlist] = await Promise.all([
       api.get('/api/calendar'),
@@ -443,59 +438,49 @@ async function loadCalendar() {
 
 function renderCalendar(data, watchlist) {
   const content = document.getElementById('calendar-content');
-  const wlMap   = Object.fromEntries(watchlist.map(c => [c.ticker, c]));
+  const wlMap   = {};
+  watchlist.forEach(c => { wlMap[c.ticker] = c; });
   const today   = new Date().toISOString().split('T')[0];
 
-  if (data.length === 0) {
+  if (!data.length) {
     content.innerHTML = `<div class="empty-state">
       <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
-        <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>
-        <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+        <rect x="3" y="4" width="18" height="18" rx="2"/>
+        <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+        <line x1="3" y1="10" x2="21" y2="10"/>
       </svg>
-      <p>No upcoming earnings data found.<br>Make sure your watchlist has companies with <strong>Active</strong> status.</p>
+      <p>No upcoming earnings data found.<br>Make sure your watchlist has enabled companies.</p>
     </div>`;
     return;
   }
 
-  // Separate upcoming vs no-date
   const upcoming = data.filter(d => d.date && d.date > today);
   const noDate   = data.filter(d => !d.date);
   const past     = data.filter(d => d.date && d.date <= today);
 
-  let html = '';
-
-  if (upcoming.length > 0) {
+  var html = '';
+  if (upcoming.length) {
     html += `<div class="calendar-group-title">📅 Upcoming</div>`;
     html += upcoming.map(d => renderCalendarRow(d, wlMap, 'upcoming')).join('');
   }
-
-  if (past.length > 0) {
+  if (past.length) {
     html += `<div class="calendar-group-title" style="margin-top:24px">📋 Recent</div>`;
     html += past.slice(-5).reverse().map(d => renderCalendarRow(d, wlMap, 'past')).join('');
   }
-
-  if (noDate.length > 0) {
+  if (noDate.length) {
     html += `<div class="calendar-group-title" style="margin-top:24px">❓ Date TBD</div>`;
     html += noDate.map(d => renderCalendarRow(d, wlMap, 'tbd')).join('');
   }
-
   content.innerHTML = html;
 }
 
 function renderCalendarRow(d, wlMap, type) {
-  const company = wlMap[d.ticker] || { name: d.ticker };
+  const company   = wlMap[d.ticker] || { name: d.ticker };
   const dateLabel = d.date ? formatDate(d.date) : 'TBD';
   const dayLabel  = d.date ? getDayLabel(d.date) : '';
-
-  const surpriseClass = d.lastEpsSurpriseRaw == null ? 'neutral' :
-    d.lastEpsSurpriseRaw > 0 ? 'pos' : 'neg';
-  const surpriseText = d.lastEpsSurprise
-    ? `${d.lastEpsSurpriseRaw > 0 ? '+' : ''}${d.lastEpsSurprise}`
-    : '—';
-
-  const upcomingBadge = type === 'upcoming'
-    ? `<span class="cal-upcoming-badge">${daysUntil(d.date)}</span>`
-    : '';
+  const surpriseClass = d.lastEpsSurpriseRaw == null ? 'neutral' : d.lastEpsSurpriseRaw > 0 ? 'pos' : 'neg';
+  const surpriseText  = d.lastEpsSurprise ? `${d.lastEpsSurpriseRaw > 0 ? '+' : ''}${d.lastEpsSurprise}` : '—';
+  const upcomingBadge = type === 'upcoming' ? `<span class="cal-upcoming-badge">${daysUntil(d.date)}</span>` : '';
 
   return `
     <div class="calendar-row">
@@ -518,15 +503,12 @@ function renderCalendarRow(d, wlMap, type) {
       <div>
         ${d.lastEpsSurprise
           ? `<div class="cal-surprise ${surpriseClass}">${surpriseText}</div>`
-          : upcomingBadge
-        }
+          : upcomingBadge}
       </div>
-    </div>
-  `;
+    </div>`;
 }
 
 function formatDate(dateStr) {
-  if (!dateStr) return 'TBD';
   const d = new Date(dateStr + 'T00:00:00');
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
@@ -538,9 +520,8 @@ function getDayLabel(dateStr) {
 
 function daysUntil(dateStr) {
   const diff = (new Date(dateStr) - new Date()) / (1000 * 60 * 60 * 24);
-  if (diff < 0) return 'Today';
-  if (diff < 1) return 'Today';
-  if (diff < 2) return 'Tomorrow';
+  if (diff <= 1) return 'Today';
+  if (diff < 2)  return 'Tomorrow';
   return `in ${Math.ceil(diff)}d`;
 }
 
@@ -550,13 +531,10 @@ function daysUntil(dateStr) {
 
 async function loadSummaries() {
   const listEl = document.getElementById('summaries-list');
-  listEl.innerHTML = `<div class="loading-spinner"><div class="spinner"></div><span>Loading…</span></div>`;
-
+  listEl.innerHTML = `<div class="loading-spinner"><div class="spinner"></div></div>`;
   try {
     state.summaries = await api.get('/api/summaries');
     renderSummariesList();
-
-    // If triggered from watchlist "View" button, auto-select
     if (state._pendingTickerFilter) {
       const match = state.summaries.find(s => s.ticker === state._pendingTickerFilter);
       if (match) selectSummary(match);
@@ -569,50 +547,38 @@ async function loadSummaries() {
 
 function renderSummariesList() {
   const listEl = document.getElementById('summaries-list');
-
-  if (state.summaries.length === 0) {
-    listEl.innerHTML = `
-      <div style="padding:20px;text-align:center;color:var(--text-muted);font-size:12.5px;line-height:1.6">
-        No summaries yet.<br>Run earnings check from Watchlist to generate one.
-      </div>`;
+  if (!state.summaries.length) {
+    listEl.innerHTML = `<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:12.5px;line-height:1.6">
+      No summaries yet.<br>Run earnings check from Watchlist to generate one.</div>`;
     return;
   }
-
   listEl.innerHTML = state.summaries.map(s => {
-    const active = state.selectedSummary?.file === s.file ? 'active' : '';
-    const dateStr = new Date(s.modified).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    const displayTitle = s.base.replace(`${s.ticker}_`, '').replace(/_summary$/, '').replace(/_/g, ' ');
-    return `
-      <div class="summary-item ${active}" data-file="${s.file}" onclick="selectSummary(${JSON.stringify(s).replace(/"/g, '&quot;')})">
-        <div class="summary-item-ticker">${s.ticker}</div>
-        <div class="summary-item-title">${escHtml(displayTitle)}</div>
-        <div class="summary-item-date">${dateStr}</div>
-      </div>
-    `;
+    const active    = state.selectedSummary?.file === s.file ? 'active' : '';
+    const dateStr   = new Date(s.modified).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const dispTitle = s.base.replace(s.ticker + '_', '').replace(/_/g, ' ');
+    return `<div class="summary-item ${active}" data-file="${escHtml(s.file)}">
+      <div class="summary-item-ticker">${s.ticker}</div>
+      <div class="summary-item-title">${escHtml(dispTitle)}</div>
+      <div class="summary-item-date">${dateStr}</div>
+    </div>`;
   }).join('');
 }
 
 async function selectSummary(summary) {
   state.selectedSummary = summary;
-
-  // Update active state in list
   document.querySelectorAll('.summary-item').forEach(el => {
     el.classList.toggle('active', el.dataset.file === summary.file);
   });
-
-  // Show content area
   document.getElementById('summary-viewer-empty').classList.add('hidden');
   document.getElementById('summary-viewer-content').classList.remove('hidden');
 
   const bodyEl = document.getElementById('summary-body');
   bodyEl.innerHTML = `<div class="loading-spinner"><div class="spinner"></div></div>`;
 
-  // Update meta
   document.getElementById('summary-ticker-badge').textContent = summary.ticker;
-  const displayTitle = summary.base.replace(`${summary.ticker}_`, '').replace(/_summary$/, '').replace(/_/g, ' ');
-  document.getElementById('summary-title-text').textContent = displayTitle;
+  const dispTitle = summary.base.replace(summary.ticker + '_', '').replace(/_/g, ' ');
+  document.getElementById('summary-title-text').textContent = dispTitle;
 
-  // PDF download link
   const pdfLink = document.getElementById('btn-download-pdf');
   pdfLink.href = `/api/summaries/${encodeURIComponent(summary.file)}/pdf`;
 
@@ -629,20 +595,15 @@ async function selectSummary(summary) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function focusSearch() {
-  setTimeout(() => document.getElementById('search-input')?.focus(), 50);
+  setTimeout(() => { const el = document.getElementById('search-input'); if (el) el.focus(); }, 50);
 }
 
 function handleSearch(value) {
   clearTimeout(state.searchTimeout);
   const q = value.trim();
-
   const resultsEl = document.getElementById('search-results');
   const spinnerEl = document.getElementById('search-spinner');
-
-  if (q.length < 1) {
-    resultsEl.innerHTML = '';
-    return;
-  }
+  if (q.length < 1) { resultsEl.innerHTML = ''; return; }
 
   spinnerEl.classList.remove('hidden');
   state.searchTimeout = setTimeout(async () => {
@@ -661,7 +622,7 @@ function renderSearchResults(results) {
   const el = document.getElementById('search-results');
   const watchlistTickers = new Set(state.watchlist.map(c => c.ticker));
 
-  if (results.length === 0) {
+  if (!results.length) {
     el.innerHTML = `<div style="color:var(--text-muted);font-size:13px;padding:16px 0">No results found.</div>`;
     return;
   }
@@ -676,17 +637,18 @@ function renderSearchResults(results) {
           <div>
             <div class="result-ticker">${r.ticker}</div>
             <div class="result-name">${escHtml(r.name)}</div>
-            ${r.exchange ? `<div class="result-exchange">${r.exchange}</div>` : ''}
+            ${r.exchange && r.exchange !== '—' ? `<div class="result-exchange">${r.exchange}</div>` : ''}
           </div>
         </div>
         <div>
           ${inWatchlist
             ? `<span class="result-in-watchlist">✓ In Watchlist</span>`
-            : `<button class="btn btn-primary btn-sm" onclick="addFromSearch('${r.ticker}', '${escAttr(r.name)}')">+ Add</button>`
-          }
+            : `<button class="btn btn-primary btn-sm"
+                       data-action="add-from-search"
+                       data-ticker="${escHtml(r.ticker)}"
+                       data-name="${escHtml(r.name)}">+ Add</button>`}
         </div>
-      </div>
-    `;
+      </div>`;
   }).join('');
 }
 
@@ -694,9 +656,7 @@ async function addFromSearch(ticker, name) {
   try {
     await api.post('/api/watchlist', { ticker, name });
     state.watchlist.push({ ticker, name, enabled: true, lastProcessedDate: null });
-    // Re-render search results to show "In Watchlist"
-    const q = document.getElementById('search-input').value;
-    handleSearch(q);
+    handleSearch(document.getElementById('search-input').value);
     toast(`${ticker} added to watchlist`, 'success');
   } catch (e) {
     toast(e.message, 'error');
@@ -723,18 +683,12 @@ function closeModal() {
 
 function escHtml(str) {
   return String(str || '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
-
-function escAttr(str) {
-  return String(str || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// API STATUS CHECK
+// API STATUS
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function checkApiStatus() {
@@ -742,65 +696,106 @@ async function checkApiStatus() {
   const label = document.getElementById('api-label');
   try {
     await api.get('/api/watchlist');
-    dot.className   = 'status-dot green';
+    dot.className    = 'status-dot green';
     label.textContent = 'Connected';
   } catch (_) {
-    dot.className   = 'status-dot red';
+    dot.className    = 'status-dot red';
     label.textContent = 'Disconnected';
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// EVENT LISTENERS
+// EVENT LISTENERS — single place, event delegation
 // ─────────────────────────────────────────────────────────────────────────────
 
 function initEventListeners() {
-  // Sidebar nav
-  document.querySelectorAll('.nav-link[data-view]').forEach(link => {
-    link.addEventListener('click', e => {
+  // ── Sidebar nav ──────────────────────────────────────────────────────────
+  document.querySelectorAll('.nav-link[data-view]').forEach(function(link) {
+    link.addEventListener('click', function(e) {
       e.preventDefault();
       showView(link.dataset.view);
     });
   });
 
-  // Add company button
-  document.getElementById('btn-add-company').addEventListener('click', openAddModal);
+  // ── Watchlist grid — delegated clicks + changes ───────────────────────────
+  var grid = document.getElementById('watchlist-grid');
+  grid.addEventListener('click',  handleWatchlistClick);
+  grid.addEventListener('change', handleWatchlistChange);
 
-  // Add company modal
-  document.getElementById('btn-close-add').addEventListener('click', closeAddModal);
-  document.getElementById('btn-cancel-add').addEventListener('click', closeAddModal);
+  // ── "Add Company" header button ───────────────────────────────────────────
+  document.getElementById('btn-add-company').addEventListener('click', function() {
+    openAddModal();
+  });
+
+  // ── Add Company modal ─────────────────────────────────────────────────────
+  document.getElementById('btn-close-add').addEventListener('click', closeModal);
+  document.getElementById('btn-cancel-add').addEventListener('click', closeModal);
   document.getElementById('btn-confirm-add').addEventListener('click', confirmAdd);
+  document.getElementById('modal-ticker').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') document.getElementById('modal-name').focus();
+  });
+  document.getElementById('modal-name').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') confirmAdd();
+  });
 
-  // Add on Enter in modal inputs
-  document.getElementById('modal-ticker').addEventListener('keydown', e => e.key === 'Enter' && document.getElementById('modal-name').focus());
-  document.getElementById('modal-name').addEventListener('keydown', e => e.key === 'Enter' && confirmAdd());
-
-  // Run modal close
+  // ── Run modal ─────────────────────────────────────────────────────────────
   document.getElementById('btn-close-run').addEventListener('click', closeModal);
   document.getElementById('btn-run-done').addEventListener('click', closeModal);
 
-  // Overlay click to close modal
-  document.getElementById('overlay').addEventListener('click', () => {
-    // Don't close run modal while running
-    if (!document.getElementById('btn-close-run').disabled) closeModal();
+  // ── Overlay — always close on click ──────────────────────────────────────
+  document.getElementById('overlay').addEventListener('click', function() {
+    closeModal();
   });
 
-  // Calendar refresh
+  // ── Calendar refresh ──────────────────────────────────────────────────────
   document.getElementById('btn-refresh-calendar').addEventListener('click', loadCalendar);
 
-  // Search input
-  document.getElementById('search-input').addEventListener('input', e => handleSearch(e.target.value));
-  document.getElementById('search-input').addEventListener('keydown', e => {
+  // ── Test Email button ─────────────────────────────────────────────────────
+  document.getElementById('btn-test-email').addEventListener('click', async function() {
+    var btn = this;
+    btn.disabled = true;
+    btn.textContent = 'Sending…';
+    try {
+      var result = await api.post('/api/test-email', {});
+      toast(result.message || 'Test email sent!', 'success');
+    } catch (e) {
+      toast('Email error: ' + e.message, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+        <polyline points="22,6 12,13 2,6"/>
+      </svg> Test Email`;
+    }
+  });
+
+  // ── Summaries list — delegated click ─────────────────────────────────────
+  document.getElementById('summaries-list').addEventListener('click', function(e) {
+    var item = e.target.closest('.summary-item[data-file]');
+    if (!item) return;
+    var file = item.dataset.file;
+    var summary = state.summaries.find(function(s) { return s.file === file; });
+    if (summary) selectSummary(summary);
+  });
+
+  // ── Search input ──────────────────────────────────────────────────────────
+  document.getElementById('search-input').addEventListener('input', function(e) {
+    handleSearch(e.target.value);
+  });
+  document.getElementById('search-input').addEventListener('keydown', function(e) {
     if (e.key === 'Enter') handleSearch(e.target.value);
   });
 
-  // Global keyboard
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') {
-      const runModalOpen = !document.getElementById('modal-run').classList.contains('hidden');
-      if (runModalOpen && document.getElementById('btn-close-run').disabled) return;
-      closeModal();
-    }
+  // ── Search results — delegated click for "+ Add" buttons ─────────────────
+  document.getElementById('search-results').addEventListener('click', function(e) {
+    var btn = e.target.closest('[data-action="add-from-search"]');
+    if (!btn) return;
+    addFromSearch(btn.dataset.ticker, btn.dataset.name);
+  });
+
+  // ── Global Escape to close modal ──────────────────────────────────────────
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeModal();
   });
 }
 

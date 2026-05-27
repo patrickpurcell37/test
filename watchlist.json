@@ -18,42 +18,42 @@
       "ticker": "AAPL",
       "lastProcessedDate": null,
       "lastEventTitle": null,
-      "enabled": false
+      "enabled": true
     },
     {
       "name": "Microsoft",
       "ticker": "MSFT",
       "lastProcessedDate": null,
       "lastEventTitle": null,
-      "enabled": false
+      "enabled": true
     },
     {
       "name": "Meta Platforms",
       "ticker": "META",
       "lastProcessedDate": null,
       "lastEventTitle": null,
-      "enabled": false
+      "enabled": true
     },
     {
       "name": "Tesla",
       "ticker": "TSLA",
       "lastProcessedDate": null,
       "lastEventTitle": null,
-      "enabled": false
+      "enabled": true
     },
     {
       "name": "Alphabet",
       "ticker": "GOOGL",
       "lastProcessedDate": null,
       "lastEventTitle": null,
-      "enabled": false
+      "enabled": true
     },
     {
       "name": "Amazon",
       "ticker": "AMZN",
       "lastProcessedDate": null,
       "lastEventTitle": null,
-      "enabled": false
+      "enabled": true
     }
   ],
   "_comment": "Add any company here. Set enabled: false to pause without deleting. lastProcessedDate is updated automatically after each summary is sent."

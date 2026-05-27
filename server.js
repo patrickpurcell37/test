@@ -18,7 +18,8 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import fs from "fs/promises";
-import yahooFinance from "yahoo-finance2";
+import YahooFinance from "yahoo-finance2";
+const yahooFinance = new YahooFinance({ suppressNotices: ["yahooSurvey"] });
 import { existsSync, createReadStream } from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -296,22 +297,37 @@ app.get("/api/search", async (req, res) => {
 app.get("/api/calendar", async (req, res) => {
   try {
     const wl = await readWatchlist();
-    const tickers = wl.companies.filter((c) => c.enabled).map((c) => c.ticker);
+    const companies = wl.companies.filter((c) => c.enabled);
 
-    // Fetch upcoming earnings from Yahoo Finance for each ticker
+    // Fetch upcoming earnings for each ticker in parallel
     const results = await Promise.allSettled(
-      tickers.map((ticker) => fetchUpcomingEarnings(ticker))
+      companies.map((c) => fetchUpcomingEarnings(c.ticker))
     );
 
-    const calendar = [];
-    results.forEach((r, i) => {
-      if (r.status === "fulfilled" && r.value) {
-        calendar.push({ ticker: tickers[i], ...r.value });
-      }
+    // Always include every enabled company — show "Date TBD" when API can't fetch
+    const calendar = companies.map((c, i) => {
+      const data = results[i].status === "fulfilled" ? results[i].value : null;
+      return {
+        ticker: c.ticker,
+        date:              data?.date              ?? null,
+        epsEstimate:       data?.epsEstimate       ?? null,
+        lastActualEps:     data?.lastActualEps     ?? null,
+        lastEpsSurprise:   data?.lastEpsSurprise   ?? null,
+        lastEpsSurpriseRaw: data?.lastEpsSurpriseRaw ?? null,
+      };
     });
 
-    // Sort by date
-    calendar.sort((a, b) => (a.date || "").localeCompare(b.date || ""));
+    // Sort: known upcoming dates first, then TBD, then past
+    const today = new Date().toISOString().split("T")[0];
+    calendar.sort((a, b) => {
+      const aUp = a.date && a.date > today;
+      const bUp = b.date && b.date > today;
+      if (aUp && bUp) return a.date.localeCompare(b.date);
+      if (aUp) return -1;
+      if (bUp) return 1;
+      return (a.date || "").localeCompare(b.date || "");
+    });
+
     res.json(calendar);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -320,30 +336,37 @@ app.get("/api/calendar", async (req, res) => {
 
 async function fetchUpcomingEarnings(ticker) {
   try {
-    // yahoo-finance2 handles Yahoo's cookie/crumb system properly
-    const result = await yahooFinance.quoteSummary(ticker, {
-      modules: ["calendarEvents", "earningsHistory"],
+    // Use the same chart API endpoint that powers the quote cards —
+    // it returns earningsTimestampStart/End without needing cookie auth.
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=5d`;
+    const resp = await fetch(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "application/json,text/html,*/*",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Referer": "https://finance.yahoo.com/",
+        "Origin": "https://finance.yahoo.com",
+      },
     });
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    const meta = data?.chart?.result?.[0]?.meta;
+    if (!meta) return null;
 
-    // Upcoming earnings date
-    const earningsDates = result.calendarEvents?.earnings?.earningsDate;
+    // earningsTimestampStart is the next expected earnings date (Unix seconds)
     let date = null;
-    if (earningsDates && earningsDates.length > 0) {
-      const raw = earningsDates[0];
-      date = (raw instanceof Date ? raw : new Date(raw)).toISOString().split("T")[0];
+    const ts = meta.earningsTimestampStart ?? meta.earningsTimestamp;
+    if (ts && ts > Date.now() / 1000) {
+      date = new Date(ts * 1000).toISOString().split("T")[0];
     }
 
-    // Most recent historical EPS
-    const history = result.earningsHistory?.history || [];
-    const lastEps = history[history.length - 1];
+    // EPS data from meta
+    const epsActual   = meta.epsTrailingTwelveMonths ?? null;
+    const epsForward  = meta.epsForward ?? null;
+    const epsEstimate = epsForward != null ? String(epsForward.toFixed(2)) : null;
+    const lastActual  = epsActual  != null ? String(epsActual.toFixed(2))  : null;
 
-    return {
-      date,
-      epsEstimate: result.calendarEvents?.earnings?.epsAverage?.fmt || null,
-      lastActualEps:    lastEps?.epsActual?.fmt        || null,
-      lastEpsSurprise:  lastEps?.surprisePercent?.fmt  || null,
-      lastEpsSurpriseRaw: lastEps?.surprisePercent?.raw ?? null,
-    };
+    return { date, epsEstimate, lastActualEps: lastActual, lastEpsSurprise: null, lastEpsSurpriseRaw: null };
   } catch {
     return null;
   }

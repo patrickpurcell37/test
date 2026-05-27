@@ -18,6 +18,7 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import fs from "fs/promises";
+import yahooFinance from "yahoo-finance2";
 import { existsSync, createReadStream } from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -319,36 +320,29 @@ app.get("/api/calendar", async (req, res) => {
 
 async function fetchUpcomingEarnings(ticker) {
   try {
-    const url = `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${ticker}?modules=calendarEvents,earnings`;
-    const resp = await fetch(url, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (compatible; EarningsDashboard/1.0)",
-        Accept: "application/json",
-      },
+    // yahoo-finance2 handles Yahoo's cookie/crumb system properly
+    const result = await yahooFinance.quoteSummary(ticker, {
+      modules: ["calendarEvents", "earningsHistory"],
     });
-    if (!resp.ok) return null;
 
-    const data = await resp.json();
-    const result = data?.quoteSummary?.result?.[0];
-    if (!result) return null;
-
-    // Earnings date from calendarEvents
+    // Upcoming earnings date
     const earningsDates = result.calendarEvents?.earnings?.earningsDate;
     let date = null;
     if (earningsDates && earningsDates.length > 0) {
-      date = new Date(earningsDates[0].raw * 1000).toISOString().split("T")[0];
+      const raw = earningsDates[0];
+      date = (raw instanceof Date ? raw : new Date(raw)).toISOString().split("T")[0];
     }
 
-    // Historical EPS from earnings module
-    const epsHistory = result.earnings?.earningsHistory?.history || [];
-    const lastEps = epsHistory[epsHistory.length - 1];
+    // Most recent historical EPS
+    const history = result.earningsHistory?.history || [];
+    const lastEps = history[history.length - 1];
 
     return {
       date,
       epsEstimate: result.calendarEvents?.earnings?.epsAverage?.fmt || null,
-      lastActualEps: lastEps?.epsActual?.fmt || null,
-      lastEpsSurprise: lastEps?.surprisePercent?.fmt || null,
-      lastEpsSurpriseRaw: lastEps?.surprisePercent?.raw || null,
+      lastActualEps:    lastEps?.epsActual?.fmt        || null,
+      lastEpsSurprise:  lastEps?.surprisePercent?.fmt  || null,
+      lastEpsSurpriseRaw: lastEps?.surprisePercent?.raw ?? null,
     };
   } catch {
     return null;
@@ -396,11 +390,51 @@ app.use((req, res) => {
   res.sendFile(path.join(PUBLIC_DIR, "index.html"));
 });
 
+// ── POST /api/test-email — send a test email to verify credentials ────────────
+app.post("/api/test-email", async (req, res) => {
+  const missing = [];
+  if (!process.env.GMAIL_USER)         missing.push("GMAIL_USER");
+  if (!process.env.GMAIL_APP_PASSWORD) missing.push("GMAIL_APP_PASSWORD");
+  if (!process.env.TO_EMAIL)           missing.push("TO_EMAIL");
+
+  if (missing.length) {
+    return res.status(400).json({
+      ok: false,
+      error: `Missing environment variables: ${missing.join(", ")}. Set these in your Railway Variables tab (Settings → Variables).`,
+    });
+  }
+
+  try {
+    const { sendEarningsSummary } = await import("./lib/email.js");
+    const to = process.env.TO_EMAIL || process.env.GMAIL_USER;
+    await sendEarningsSummary({
+      summaryMarkdown: `# ✅ EarningsIQ Email Test\n\nYour email configuration is **working correctly**!\n\nEarningsIQ is ready to deliver earnings call summaries to **${to}**.\n\n---\n\nThis is a test message sent from your EarningsIQ dashboard.`,
+      companyName: "EarningsIQ",
+      ticker: "TEST",
+      quarter: "Email Test",
+    });
+    res.json({ ok: true, message: `Test email sent to ${to}` });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
 // ── Start ─────────────────────────────────────────────────────────────────────
 app.listen(PORT, () => {
   console.log(`\n🚀 Earnings Intelligence Dashboard`);
   console.log(`   http://localhost:${PORT}\n`);
   console.log(`   Watchlist  : ${WATCHLIST_PATH}`);
   console.log(`   Summaries  : ${SUMMARIES_DIR}`);
-  console.log(`   Environment: ${process.env.ANTHROPIC_API_KEY ? "✅ ANTHROPIC_API_KEY set" : "⚠️  ANTHROPIC_API_KEY missing (runs will fail)"}`);
+
+  const envChecks = [
+    ["ANTHROPIC_API_KEY",  "✅", "⚠️  ANTHROPIC_API_KEY missing (runs will fail)"],
+    ["GMAIL_USER",         "✅", "⚠️  GMAIL_USER missing (email will not send)"],
+    ["GMAIL_APP_PASSWORD", "✅", "⚠️  GMAIL_APP_PASSWORD missing (email will not send)"],
+    ["TO_EMAIL",           "✅", "⚠️  TO_EMAIL missing (email will not send)"],
+  ];
+  console.log("");
+  for (const [key, ok, warn] of envChecks) {
+    console.log(`   ${process.env[key] ? `${ok} ${key} set` : warn}`);
+  }
+  console.log("");
 });

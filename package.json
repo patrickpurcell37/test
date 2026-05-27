@@ -18,7 +18,8 @@
     "express": "^5.2.1",
     "marked": "^18.0.4",
     "nodemailer": "^6.10.1",
-    "puppeteer": "^25.1.0"
+    "puppeteer": "^25.1.0",
+    "yahoo-finance2": "^3.14.1"
   },
   "optionalDependencies": {
     "node-cron": "^3.0.3"

@@ -742,15 +742,32 @@ function initEventListeners() {
   document.getElementById('btn-close-run').addEventListener('click', closeModal);
   document.getElementById('btn-run-done').addEventListener('click', closeModal);
 
-  // ── Overlay — close on click (but not while a run is in progress) ─────────
+  // ── Overlay — always close on click ──────────────────────────────────────
   document.getElementById('overlay').addEventListener('click', function() {
-    var closeBtn = document.getElementById('btn-close-run');
-    if (closeBtn && closeBtn.disabled) return; // run in progress
     closeModal();
   });
 
   // ── Calendar refresh ──────────────────────────────────────────────────────
   document.getElementById('btn-refresh-calendar').addEventListener('click', loadCalendar);
+
+  // ── Test Email button ─────────────────────────────────────────────────────
+  document.getElementById('btn-test-email').addEventListener('click', async function() {
+    var btn = this;
+    btn.disabled = true;
+    btn.textContent = 'Sending…';
+    try {
+      var result = await api.post('/api/test-email', {});
+      toast(result.message || 'Test email sent!', 'success');
+    } catch (e) {
+      toast('Email error: ' + e.message, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+        <polyline points="22,6 12,13 2,6"/>
+      </svg> Test Email`;
+    }
+  });
 
   // ── Summaries list — delegated click ─────────────────────────────────────
   document.getElementById('summaries-list').addEventListener('click', function(e) {
@@ -778,10 +795,7 @@ function initEventListeners() {
 
   // ── Global Escape to close modal ──────────────────────────────────────────
   document.addEventListener('keydown', function(e) {
-    if (e.key !== 'Escape') return;
-    var closeBtn = document.getElementById('btn-close-run');
-    if (closeBtn && closeBtn.disabled) return;
-    closeModal();
+    if (e.key === 'Escape') closeModal();
   });
 }
 

@@ -1,3 +1,4 @@
 node_modules/
 .env
 NVDA_Q4_FY2025_raw_transcript.txt
+summaries/*.txt

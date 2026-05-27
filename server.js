@@ -411,14 +411,13 @@ app.get("/api/quote/:ticker", async (req, res) => {
 // ── POST /api/test-email — send a test email to verify credentials ────────────
 app.post("/api/test-email", async (req, res) => {
   const missing = [];
-  if (!process.env.GMAIL_USER)         missing.push("GMAIL_USER");
-  if (!process.env.GMAIL_APP_PASSWORD) missing.push("GMAIL_APP_PASSWORD");
-  if (!process.env.TO_EMAIL)           missing.push("TO_EMAIL");
+  if (!process.env.RESEND_API_KEY) missing.push("RESEND_API_KEY");
+  if (!process.env.TO_EMAIL)       missing.push("TO_EMAIL");
 
   if (missing.length) {
     return res.status(400).json({
       ok: false,
-      error: `Missing environment variables: ${missing.join(", ")}. Set these in your Railway Variables tab (Settings → Variables).`,
+      error: `Missing: ${missing.join(", ")}. Add these in Railway → Variables tab. Get a free RESEND_API_KEY at resend.com.`,
     });
   }
 
@@ -450,10 +449,9 @@ app.listen(PORT, () => {
   console.log(`   Summaries  : ${SUMMARIES_DIR}`);
 
   const envChecks = [
-    ["ANTHROPIC_API_KEY",  "✅", "⚠️  ANTHROPIC_API_KEY missing (runs will fail)"],
-    ["GMAIL_USER",         "✅", "⚠️  GMAIL_USER missing (email will not send)"],
-    ["GMAIL_APP_PASSWORD", "✅", "⚠️  GMAIL_APP_PASSWORD missing (email will not send)"],
-    ["TO_EMAIL",           "✅", "⚠️  TO_EMAIL missing (email will not send)"],
+    ["ANTHROPIC_API_KEY", "✅", "⚠️  ANTHROPIC_API_KEY missing (runs will fail)"],
+    ["RESEND_API_KEY",    "✅", "⚠️  RESEND_API_KEY missing (email will not send — get free key at resend.com)"],
+    ["TO_EMAIL",          "✅", "⚠️  TO_EMAIL missing (email will not send)"],
   ];
   console.log("");
   for (const [key, ok, warn] of envChecks) {

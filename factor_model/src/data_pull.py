@@ -148,9 +148,14 @@ def pull_prices(tickers=None, start=None, end=None):
             # USD-denominated: multiply by USDCAD
             prices_cad[canonical] = prices_local[canonical] * usdcad
 
+    # Drop any NaT index rows that can arise from resampling edge cases
+    prices_local = prices_local[prices_local.index.notna()]
+    prices_cad   = prices_cad[prices_cad.index.notna()]
+
     pulled = len(prices_local.columns)
-    date_min = prices_local.index.min()
-    date_max = prices_local.index.max()
+    valid_idx = prices_local.index.dropna()
+    date_min = valid_idx.min() if len(valid_idx) else pd.Timestamp('today')
+    date_max = valid_idx.max() if len(valid_idx) else pd.Timestamp('today')
     print(f"Prices pulled: {pulled}/{len(tickers)} tickers. Date range: {date_min.strftime('%Y-%m')} to {date_max.strftime('%Y-%m')}")
 
     prices_local.to_csv(RAW_PRICES_DIR / 'prices_monthly_local.csv')

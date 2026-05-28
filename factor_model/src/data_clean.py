@@ -151,11 +151,14 @@ def build_panel(prices_cad, fundamentals_clean, earnings_clean):
     Side effects:
         Saves panel to data/processed/panel.csv
     """
-    prices_long = prices_cad.reset_index().melt(
-        id_vars=['Date'],
+    prices_reset = prices_cad.reset_index()
+    # The index column may be named 'Date', 'date', 'index', or the original index name.
+    date_col = prices_reset.columns[0]
+    prices_long = prices_reset.melt(
+        id_vars=[date_col],
         var_name='ticker',
         value_name='adj_close_cad'
-    ).rename(columns={'Date': 'date'})
+    ).rename(columns={date_col: 'date'})
     prices_long['date'] = pd.to_datetime(prices_long['date'])
 
     fund_frames = []

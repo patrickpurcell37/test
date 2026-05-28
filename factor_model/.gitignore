@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Environment
+.env
+
+# Generated data outputs
+data/raw/prices/*.csv
+data/raw/fundamentals/*.csv
+data/raw/earnings/*.csv
+data/processed/*.csv
+data/processed/factor_scores/*.csv
+data/processed/backtest_results/*.csv
+
+# Generated outputs
+outputs/scorecard_*.csv
+outputs/error_log.txt
+outputs/flag_notes.txt
+outputs/last_refresh.txt

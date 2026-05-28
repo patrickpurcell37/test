@@ -1,8 +1,11 @@
 [phases.setup]
-nixPkgs = ["python311", "python311Packages.pip"]
+nixPkgs = ["libxml2", "libxslt"]
 
 [phases.install]
 cmds = ["pip install -r requirements.txt"]
 
+[phases.build]
+cmds = ["python generate_synthetic_data.py && python run_pipeline_synthetic.py"]
+
 [start]
-cmd = "python generate_synthetic_data.py && python run_pipeline_synthetic.py && streamlit run dashboard/app.py --server.port $PORT --server.address 0.0.0.0 --server.headless true"
+cmd = "streamlit run dashboard/app.py --server.port $PORT --server.address 0.0.0.0 --server.headless true"

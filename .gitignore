@@ -1,4 +1,4 @@
 node_modules/
 .env
-summaries/*.md
-!summaries/.gitkeep
+NVDA_Q4_FY2025_raw_transcript.txt
+summaries/*.txt

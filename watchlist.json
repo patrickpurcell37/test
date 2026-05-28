@@ -16,22 +16,22 @@
     {
       "name": "Apple",
       "ticker": "AAPL",
-      "lastProcessedDate": null,
-      "lastEventTitle": null,
+      "lastProcessedDate": "2026-04-30",
+      "lastEventTitle": "Apple (AAPL) Q2 2026 Earnings Call Transcript",
       "enabled": true
     },
     {
       "name": "Microsoft",
       "ticker": "MSFT",
-      "lastProcessedDate": null,
-      "lastEventTitle": null,
+      "lastProcessedDate": "2026-04-29",
+      "lastEventTitle": "Microsoft (MSFT) Q3 2026 Earnings Transcript",
       "enabled": true
     },
     {
       "name": "Meta Platforms",
       "ticker": "META",
-      "lastProcessedDate": null,
-      "lastEventTitle": null,
+      "lastProcessedDate": "2026-04-29",
+      "lastEventTitle": "Meta Platforms (META) Q1 2026 Earnings Call",
       "enabled": true
     },
     {
@@ -51,8 +51,8 @@
     {
       "name": "Amazon",
       "ticker": "AMZN",
-      "lastProcessedDate": null,
-      "lastEventTitle": null,
+      "lastProcessedDate": "2026-04-29",
+      "lastEventTitle": "Amazon (AMZN) Q1 2026 Earnings Call Transcript",
       "enabled": true
     }
   ],
